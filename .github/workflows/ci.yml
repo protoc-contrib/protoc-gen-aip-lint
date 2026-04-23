@@ -48,7 +48,7 @@ jobs:
         include:
           - os: ubuntu-latest
             nix_system: x86_64-linux
-          - os: macos-14
+          - os: macos-15
             nix_system: aarch64-darwin
     runs-on: ${{ matrix.os }}
     permissions:

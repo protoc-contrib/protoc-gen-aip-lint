@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.2.0...v0.2.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* bump CI runner from macos-14 to macos-15 ([afc3a21](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/afc3a21cd11c9d7beb281c5edf3006ab5e07f245))
+
 ## [0.2.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.1.1...v0.2.0) (2026-04-18)
 
 

@@ -20,7 +20,7 @@
           inherit version;
           src = pkgs.lib.cleanSource ./.;
           subPackages = [ "cmd/protoc-gen-aip-lint" ];
-          vendorHash = "sha256-Q5A4R1NMWWEnKE+6UOvztqSsscEjIAQAWsP7o2Zd+xo=";
+          vendorHash = "sha256-w8QH05chihp7yP9EOOKZlW/pGpis+AcAbfY4uzvzh/4=";
           ldflags = [ "-s" "-w" "-X main.version=${version}" ];
           meta = with pkgs.lib; {
             description = "A protoc plugin for the Google API Linter";

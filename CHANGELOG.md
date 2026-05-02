@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.2.1...v0.3.0) (2026-05-02)
+
+
+### Features
+
+* **nix:** bump nixpkgs input ([9cc586f](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/9cc586f06b379c6384b79609caf2bf68b5198f60))
+
+
+### Bug Fixes
+
+* **nix:** update vendorHash for ginkgo dependency bump ([ad8196d](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/ad8196dba5834c296d28e199dd500c3f71732510))
+
 ## [0.2.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.2.0...v0.2.1) (2026-04-27)
 
 

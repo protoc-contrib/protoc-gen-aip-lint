@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.3.0...v0.3.1) (2026-05-04)
+
+
+### Bug Fixes
+
+* **github:** correct action versions in update.yml ([9df6999](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/9df69992427687aaa5573308f8d63083fbb9fff2))
+
 ## [0.3.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.2.1...v0.3.0) (2026-05-02)
 
 

@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/googleapis/api-linter/v2 v2.3.1
 	github.com/onsi/ginkgo/v2 v2.32.1
-	github.com/onsi/gomega v1.42.1
+	github.com/onsi/gomega v1.43.0
 	github.com/urfave/cli/v3 v3.11.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1

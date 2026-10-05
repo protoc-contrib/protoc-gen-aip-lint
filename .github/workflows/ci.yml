@@ -11,6 +11,36 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Dependabot bumps go.sum but not the vendorHash in flake.nix. This pushes
+  # the new one with the App token, and the run that push triggers cancels
+  # this one through the concurrency group above. Workflows Dependabot
+  # triggers read Dependabot secrets only, so both values live there.
+  hash:
+    if: startsWith(github.head_ref, 'dependabot/go_modules/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - name: Generate App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+
+      - name: Update Dependency Hash
+        uses: nixos-contrib/nix-update-hash@main
+
   test:
     runs-on: ubuntu-latest
     permissions:

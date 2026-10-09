@@ -20,7 +20,7 @@
           inherit version;
           src = pkgs.lib.cleanSource ./.;
           subPackages = [ "cmd/protoc-gen-aip-lint" ];
-          vendorHash = "sha256-/EEKneEJSj+8k+5yglNhIyp3Q6S7TeHyHomyVwcUUGQ=";
+          vendorHash = "sha256-Hr7MRdd4iyY3uLE21sTGKdx92Tkomm5EJD/eUJl1ZX0=";
           ldflags = [
             "-s"
             "-w"

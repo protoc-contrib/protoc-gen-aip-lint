@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.3.1...v0.4.0) (2026-10-10)
+
+
+### Features
+
+* check update_mask's field_mask.in against the writable fields ([#55](https://github.com/protoc-contrib/protoc-gen-aip-lint/issues/55)) ([7fec197](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/7fec1976526284e5a0beb3d0d1038476f7e4f702))
+
 ## [0.3.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.3.0...v0.3.1) (2026-05-04)
 
 

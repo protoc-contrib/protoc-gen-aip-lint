@@ -11,6 +11,7 @@ A [protoc](https://protobuf.dev) plugin that runs the [Google API Linter](https:
 ## Features
 
 - Lint `.proto` files against the full set of AIP rules
+- One rule of its own: an update mask's `field_mask.in` matches the resource's writable fields (see [Custom Rules](#custom-rules))
 - Multiple output formats: YAML, JSON, GitHub Actions annotations, and summary table
 - Configurable via the standard `api-linter` YAML configuration file
 - Works with `protoc`, `buf`, or any protoc-compatible toolchain
@@ -117,6 +118,38 @@ core::0140::lower-snake                   3
 ----------------------------------------  -----
 Total (2 files)                           4
 ```
+
+## Custom Rules
+
+Alongside api-linter's rules, the plugin runs its own, under a
+`protoc-contrib::` namespace so they are never mistaken for upstream ones.
+Disable one like any other rule.
+
+### `protoc-contrib::0134::update-mask-writable-fields`
+
+On an AIP-134 `Update*Request`, the `(buf.validate.field).field_mask.in`
+allow-list on `update_mask` must list exactly the updated resource's writable
+fields: every top-level field not annotated `OUTPUT_ONLY`, `IDENTIFIER` or
+`IMMUTABLE`.
+
+```proto
+google.protobuf.FieldMask update_mask = 2 [
+  (buf.validate.field).field_mask = {in: ["display_name", "description"]}
+];
+```
+
+The list restates what `google.api.field_behavior` already says, and nothing
+else keeps the two in step. A writable field missing from it is one no client
+can update; a listed field that is not writable is one a client can
+overwrite. Each is reported separately, naming the field. Order does not
+matter, and a nested path such as `author.name` is allowed under a writable
+field.
+
+A request whose `update_mask` has no `field_mask.in` is not checked. The
+resource is the request field typed after it (`book` in `UpdateBookRequest`),
+or else its only message field besides `update_mask`. The option is read
+through the `buf/validate/validate.proto` the schema imports, so any
+protovalidate version works.
 
 ## Configuration
 

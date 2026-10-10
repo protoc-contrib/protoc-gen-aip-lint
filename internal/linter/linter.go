@@ -19,7 +19,10 @@ var (
 
 func initRegistry() error {
 	registryOnce.Do(func() {
-		registryErr = rules.Add(registry)
+		if registryErr = rules.Add(registry); registryErr != nil {
+			return
+		}
+		registryErr = registerCustomRules(registry)
 	})
 	return registryErr
 }
@@ -46,7 +49,7 @@ type Config struct {
 type Response = lint.Response
 
 // New creates a configured [lint.Linter] backed by the full set of built-in
-// AIP rules. It returns an error if rule registration fails or the
+// AIP rules, plus this plugin's own (see [UpdateMaskWritableFields]). It returns an error if rule registration fails or the
 // configuration file at [Config.Path] cannot be read.
 func New(config *Config) (*lint.Linter, error) {
 	if err := initRegistry(); err != nil {

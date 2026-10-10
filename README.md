@@ -142,8 +142,18 @@ The list restates what `google.api.field_behavior` already says, and nothing
 else keeps the two in step. A writable field missing from it is one no client
 can update; a listed field that is not writable is one a client can
 overwrite. Each is reported separately, naming the field. Order does not
-matter, and a nested path such as `author.name` is allowed under a writable
-field.
+matter, and the full-replacement wildcard `*` may be listed.
+
+A nested path such as `author.name` is checked segment by segment: each must
+be a field of the message it indexes and writable, and each but the last a
+singular message — a mask cannot index into a scalar, a repeated field or a
+map. So `author.create_time` is reported when `Author.create_time` is
+`OUTPUT_ONLY`, however writable `author` is.
+
+This is deliberately **stricter than AIP-161**, which has a server ignore an
+`OUTPUT_ONLY` path in a mask rather than reject it. Here `field_mask.in`
+rejects one — a client learns its write went nowhere instead of seeing it
+silently dropped — and this rule keeps `OUTPUT_ONLY` paths out of the list.
 
 A request whose `update_mask` has no `field_mask.in` is not checked. The
 resource is the request field typed after it (`book` in `UpdateBookRequest`),

@@ -20,6 +20,10 @@ import (
 // writable fields.
 const UpdateMaskWritableFields lint.RuleName = "protoc-contrib::0134::update-mask-writable-fields"
 
+// fieldMaskWildcard is AIP-134's full-replacement path. Listing it in
+// `field_mask.in` lets a client ask for full replacement; it names no field.
+const fieldMaskWildcard = "*"
+
 // validateFieldExtension is the protovalidate field option. It is resolved by
 // name from the request's own descriptors rather than through a Go package,
 // so any protovalidate version the schema imports works, and nothing here
@@ -61,6 +65,11 @@ func registerCustomRules(registry lint.RuleRegistry) error {
 // them in step. A writable field missing from the list is one no client can
 // update; a listed field that is not writable is one a client can overwrite.
 // A request with no `field_mask.in` is not this rule's concern.
+//
+// This is deliberately stricter than AIP-161, which has a server ignore an
+// OUTPUT_ONLY path in a mask rather than reject it: here `field_mask.in`
+// rejects one, so a client learns its write went nowhere, and this rule keeps
+// OUTPUT_ONLY paths out of the list.
 var updateMaskWritableFields = &lint.MessageRule{
 	Name: UpdateMaskWritableFields,
 	OnlyIf: func(m protoreflect.MessageDescriptor) bool {
@@ -107,7 +116,7 @@ func updatedResource(request protoreflect.MessageDescriptor) protoreflect.Messag
 }
 
 // compareWritable reports, as separate problems, every writable field of
-// resource missing from listed and every listed path that is not one.
+// resource missing from listed and every listed path no update may write.
 func compareWritable(mask protoreflect.FieldDescriptor, resource protoreflect.MessageDescriptor, listed []string) []lint.Problem {
 	writable := writableFields(resource)
 
@@ -124,14 +133,12 @@ func compareWritable(mask protoreflect.FieldDescriptor, resource protoreflect.Me
 		}
 	}
 	for _, path := range listed {
-		// A nested path is allowed under a writable top-level field.
-		top, _, _ := strings.Cut(path, ".")
-		if slices.Contains(writable, top) {
+		if path == fieldMaskWildcard {
 			continue
 		}
-		reason := "is not a field of `" + string(resource.Name()) + "`"
-		if field := resource.Fields().ByName(protoreflect.Name(top)); field != nil {
-			reason = fmt.Sprintf("is %s, so no update may write it", strings.Join(unwritableBehaviors(field), " and "))
+		reason := unwritablePath(resource, path)
+		if reason == "" {
+			continue
 		}
 		problems = append(problems, lint.Problem{
 			Message: fmt.Sprintf(
@@ -141,6 +148,50 @@ func compareWritable(mask protoreflect.FieldDescriptor, resource protoreflect.Me
 		})
 	}
 	return problems
+}
+
+// unwritablePath says why no update may write path on resource, or "" if one
+// may. Every segment is checked against the message it indexes: it must be a
+// field of it, writable, and — unless it is the last — a singular message,
+// since a scalar has no subpaths and a mask cannot index into a repeated field
+// or a map.
+func unwritablePath(resource protoreflect.MessageDescriptor, path string) string {
+	segments := strings.Split(path, ".")
+	message := resource
+	for i, segment := range segments {
+		field := message.Fields().ByName(protoreflect.Name(segment))
+		if field == nil {
+			if i == 0 {
+				return fmt.Sprintf("is not a field of `%s`", message.Name())
+			}
+			return fmt.Sprintf("reaches %q, which is not a field of `%s`", segment, message.Name())
+		}
+		if behaviors := unwritableBehaviors(field); len(behaviors) > 0 {
+			if i == 0 {
+				return fmt.Sprintf("is %s, so no update may write it", strings.Join(behaviors, " and "))
+			}
+			return fmt.Sprintf("reaches `%s.%s`, which is %s, so no update may write it",
+				message.Name(), segment, strings.Join(behaviors, " and "))
+		}
+		if i == len(segments)-1 {
+			return ""
+		}
+		var kind string
+		switch {
+		case field.IsMap():
+			kind = "a map"
+		case field.IsList():
+			kind = "a repeated field"
+		case field.Message() == nil:
+			kind = "a scalar"
+		default:
+			message = field.Message()
+			continue
+		}
+		return fmt.Sprintf("goes through `%s.%s`, which is %s, not a singular message, so it has no subpaths",
+			message.Name(), segment, kind)
+	}
+	return ""
 }
 
 // writableFields is every top-level field of resource an update may write, in

@@ -105,9 +105,17 @@ func messageField(name string, number int32, typeName string, options *descripto
 	}
 }
 
+func repeatedMessageField(name string, number int32, typeName string) *descriptorpb.FieldDescriptorProto {
+	field := messageField(name, number, typeName, nil)
+	field.Label = descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum()
+	return field
+}
+
 // lintUpdate builds `UpdateBookRequest` over a `Book` with one field of each
-// kind — writable (`title`, `author`), IDENTIFIER (`name`), OUTPUT_ONLY
-// (`etag`), IMMUTABLE (`serial`) — and returns the messages
+// kind — writable (`title`, the message `author`, the repeated `chapters`),
+// IDENTIFIER (`name`), OUTPUT_ONLY (`etag`), IMMUTABLE (`serial`) — where
+// `Author` has a writable `name` and an OUTPUT_ONLY `create_time`, and returns
+// the messages
 // UpdateMaskWritableFields reports for it. A nil paths leaves `field_mask.in`
 // unset.
 func lintUpdate(paths []string) []string {
@@ -139,13 +147,25 @@ func lintUpdate(paths []string) []string {
 		},
 		MessageType: []*descriptorpb.DescriptorProto{
 			{
+				Name: proto.String("Author"),
+				Field: []*descriptorpb.FieldDescriptorProto{
+					stringField("name", 1, nil),
+					stringField("create_time", 2, behavior(annotations.FieldBehavior_OUTPUT_ONLY)),
+				},
+			},
+			{
+				Name:  proto.String("Chapter"),
+				Field: []*descriptorpb.FieldDescriptorProto{stringField("title", 1, nil)},
+			},
+			{
 				Name: proto.String("Book"),
 				Field: []*descriptorpb.FieldDescriptorProto{
 					stringField("name", 1, behavior(annotations.FieldBehavior_IDENTIFIER)),
 					stringField("title", 2, nil),
-					stringField("author", 3, behavior(annotations.FieldBehavior_OPTIONAL)),
+					messageField("author", 3, ".example.v1.Author", behavior(annotations.FieldBehavior_OPTIONAL)),
 					stringField("etag", 4, behavior(annotations.FieldBehavior_OUTPUT_ONLY)),
 					stringField("serial", 5, behavior(annotations.FieldBehavior_IMMUTABLE)),
+					repeatedMessageField("chapters", 6, ".example.v1.Chapter"),
 				},
 			},
 			{
@@ -178,11 +198,15 @@ func lintUpdate(paths []string) []string {
 
 var _ = Describe("UpdateMaskWritableFields", func() {
 	It("accepts field_mask.in listing exactly the writable fields, in any order", func() {
-		Expect(lintUpdate([]string{"author", "title"})).To(BeEmpty())
+		Expect(lintUpdate([]string{"chapters", "author", "title"})).To(BeEmpty())
 	})
 
 	It("accepts a nested path under a writable field", func() {
-		Expect(lintUpdate([]string{"title", "author", "author.name"})).To(BeEmpty())
+		Expect(lintUpdate([]string{"title", "author", "chapters", "author.name"})).To(BeEmpty())
+	})
+
+	It("accepts the full-replacement wildcard", func() {
+		Expect(lintUpdate([]string{"title", "author", "chapters", "*"})).To(BeEmpty())
 	})
 
 	It("says nothing when field_mask.in is not set", func() {
@@ -198,14 +222,15 @@ var _ = Describe("UpdateMaskWritableFields", func() {
 	It("reports each writable field missing from field_mask.in", func() {
 		// `author.name` allows a path under `author`, not `author` itself.
 		messages := lintUpdate([]string{"author.name"})
-		Expect(messages).To(HaveLen(2))
+		Expect(messages).To(HaveLen(3))
 		Expect(messages[0]).To(ContainSubstring("`Book.title` is writable but missing"))
 		Expect(messages[0]).To(ContainSubstring(`add "title"`))
 		Expect(messages[1]).To(ContainSubstring("`Book.author` is writable but missing"))
+		Expect(messages[2]).To(ContainSubstring("`Book.chapters` is writable but missing"))
 	})
 
 	It("reports each listed field an update may not write, naming why", func() {
-		messages := lintUpdate([]string{"title", "author", "name", "etag", "serial"})
+		messages := lintUpdate([]string{"title", "author", "chapters", "name", "etag", "serial"})
 		Expect(messages).To(ConsistOf(
 			ContainSubstring(`lists "name", which is IDENTIFIER`),
 			ContainSubstring(`lists "etag", which is OUTPUT_ONLY`),
@@ -214,14 +239,38 @@ var _ = Describe("UpdateMaskWritableFields", func() {
 	})
 
 	It("reports a listed path that is not a field at all", func() {
-		Expect(lintUpdate([]string{"title", "author", "pages"})).To(ConsistOf(
+		Expect(lintUpdate([]string{"title", "author", "chapters", "pages"})).To(ConsistOf(
 			ContainSubstring(`lists "pages", which is not a field of ` + "`Book`"),
 		))
 	})
 
 	It("reports a nested path under a field an update may not write", func() {
-		Expect(lintUpdate([]string{"title", "author", "etag.value"})).To(ConsistOf(
+		Expect(lintUpdate([]string{"title", "author", "chapters", "etag.value"})).To(ConsistOf(
 			ContainSubstring(`lists "etag.value", which is OUTPUT_ONLY`),
+		))
+	})
+
+	It("reports a nested path whose last segment an update may not write", func() {
+		Expect(lintUpdate([]string{"title", "author", "chapters", "author.create_time"})).To(ConsistOf(
+			ContainSubstring(`lists "author.create_time", which reaches ` + "`Author.create_time`, which is OUTPUT_ONLY"),
+		))
+	})
+
+	It("reports a nested path naming no field of the message it indexes", func() {
+		Expect(lintUpdate([]string{"title", "author", "chapters", "author.pages"})).To(ConsistOf(
+			ContainSubstring(`lists "author.pages", which reaches "pages", which is not a field of ` + "`Author`"),
+		))
+	})
+
+	It("reports a path through a scalar", func() {
+		Expect(lintUpdate([]string{"title", "author", "chapters", "title.length"})).To(ConsistOf(
+			ContainSubstring(`lists "title.length", which goes through ` + "`Book.title`, which is a scalar"),
+		))
+	})
+
+	It("reports a path through a repeated field", func() {
+		Expect(lintUpdate([]string{"title", "author", "chapters", "chapters.title"})).To(ConsistOf(
+			ContainSubstring(`lists "chapters.title", which goes through ` + "`Book.chapters`, which is a repeated field"),
 		))
 	})
 })

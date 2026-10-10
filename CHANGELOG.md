@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.4.0...v0.4.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* build a static Linux binary ([#59](https://github.com/protoc-contrib/protoc-gen-aip-lint/issues/59)) ([e1c2b21](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/e1c2b211662cf8713796fbb6f8b4930e8b2b04e9))
+
 ## [0.4.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.3.1...v0.4.0) (2026-10-10)
 
 

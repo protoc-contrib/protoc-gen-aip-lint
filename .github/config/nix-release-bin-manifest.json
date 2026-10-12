@@ -1,13 +1,13 @@
 {
   "assets": {
     "aarch64-darwin": {
-      "hash": "sha256-8YjdAnD9rd0kcR3R46n0dis1FFRPO3zWe0X90BBnLhY=",
-      "url": "https://github.com/protoc-contrib/protoc-gen-aip-lint/releases/download/v0.4.1/protoc-gen-aip-lint-aarch64-darwin"
+      "hash": "sha256-7bP1PQLMYEIrLdWbvNR4b3ZC0vdf6crqnwoVJzNIg8I=",
+      "url": "https://github.com/protoc-contrib/protoc-gen-aip-lint/releases/download/v0.5.0/protoc-gen-aip-lint-aarch64-darwin"
     },
     "x86_64-linux": {
-      "hash": "sha256-z3Rzde1qhHyVmFz+GlIhDhzhEHshfzZ47jNVTJDbQn0=",
-      "url": "https://github.com/protoc-contrib/protoc-gen-aip-lint/releases/download/v0.4.1/protoc-gen-aip-lint-x86_64-linux"
+      "hash": "sha256-nhHBJRCGabdoqVcVB3mSoW7zjxiDphnjWXB1TruL3lg=",
+      "url": "https://github.com/protoc-contrib/protoc-gen-aip-lint/releases/download/v0.5.0/protoc-gen-aip-lint-x86_64-linux"
     }
   },
-  "version": "0.4.1"
+  "version": "0.5.0"
 }

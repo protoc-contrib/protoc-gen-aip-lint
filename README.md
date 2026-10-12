@@ -228,6 +228,43 @@ Not checked:
 A field declared in a file other than the one being linted is reported on the
 resource field the path starts from, naming the path.
 
+### `protoc-contrib::0203::request-required-unenforced`
+
+The mirror of
+[`resource-required-rejects-zero`](#protoc-contrib0203resource-required-rejects-zero):
+a REQUIRED field of an RPC request must carry a `buf.validate` rule that
+rejects it when a request leaves it unset.
+
+```proto
+message ListItemsRequest {
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    // Either rule alone enforces REQUIRED: "" fails both.
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.pattern = "^collections/[a-z0-9-]+$"
+  ];
+}
+```
+
+A request's own REQUIRED fields — `parent`, the resource field of a create or
+update — have one enforcer: protovalidate, run on every request. A REQUIRED
+field no rule enforces is one the schema claims is required and no server
+checks.
+
+Which rules reject the unset value is decided exactly as for
+`resource-required-rejects-zero`: `required = true`, a minimum length of at
+least 1, a pattern `""` does not match, bounds that exclude 0, and the rest
+of its table. `IGNORE_ALWAYS` turns every rule off, so a field under it is
+reported. A message field is unset only when absent, which only
+`required = true` rejects.
+
+A request is the input of a method a service in the file declares, unless it
+is a resource. Every message it holds is checked too — singular, repeated or
+a map's values — except a resource and what the resource holds, which are
+`resource-required-rejects-zero`'s. A field declared in a file other than the
+one being linted is reported on the first field of its path in that file, or
+else on the method.
+
 ### `protoc-contrib::0203::non-empty-default-value`
 
 A field annotated `(google.api.field_behavior) = NON_EMPTY_DEFAULT` must set

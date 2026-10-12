@@ -50,7 +50,7 @@ type Response = lint.Response
 
 // New creates a configured [lint.Linter] backed by the full set of built-in
 // AIP rules, plus this plugin's own (see [UpdateMaskWritableFields],
-// [ResourceRequiredUnvalidated] and [NonEmptyDefaultValue]). It returns an
+// [ResourceRequiredRejectsZero] and [NonEmptyDefaultValue]). It returns an
 // error if rule registration fails or the configuration file at
 // [Config.Path] cannot be read.
 func New(config *Config) (*lint.Linter, error) {

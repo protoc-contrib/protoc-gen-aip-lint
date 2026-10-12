@@ -36,7 +36,7 @@ var updateRequestName = regexp.MustCompile("^Update[A-Z]+[A-Za-z0-9]*Request$")
 // customRules are the rules this plugin adds to api-linter's.
 var customRules = []lint.ProtoRule{
 	updateMaskWritableFields,
-	resourceRequiredUnvalidated,
+	resourceRequiredRejectsZero,
 	nonEmptyDefaultValue,
 }
 

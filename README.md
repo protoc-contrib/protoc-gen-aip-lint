@@ -161,11 +161,12 @@ or else its only message field besides `update_mask`. The option is read
 through the `buf/validate/validate.proto` the schema imports, so any
 protovalidate version works.
 
-### `protoc-contrib::0203::resource-required-unvalidated`
+### `protoc-contrib::0203::resource-required-rejects-zero`
 
 A field of a resource annotated `(google.api.field_behavior) = REQUIRED`
-must not also set `(buf.validate.field).required = true`. Nor must a
-REQUIRED field of a singular message the resource holds, at any depth.
+must not carry a `buf.validate` rule that fails when a request leaves the
+field unset. Nor must a REQUIRED field of a singular message the resource
+holds, at any depth.
 
 ```proto
 message Book {
@@ -173,7 +174,8 @@ message Book {
 
   string title = 2 [
     (google.api.field_behavior) = REQUIRED,
-    // Not `required`: the length rule applies once a value is set.
+    // Not `required`, and not min_len alone: the length rule applies once a
+    // value is set.
     (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
     (buf.validate.field).string.min_len = 1
   ];
@@ -183,19 +185,43 @@ message Book {
 [AIP-203](https://google.aip.dev/203#required) has a create set every
 REQUIRED field, and a partial update omit any its `update_mask` does not
 name. The resource message is shared by both, and protovalidate cannot tell
-which method it is validating, so `required` on the resource rejects every
-partial update that leaves the field out. Enforce the create/update split per
-method instead: aip-go's `MissingRequiredPaths`, protoc-gen-rust-aip's
-`missing_required_paths`.
+which method it is validating, so a rule that fails the field's unset value
+fails every partial update that leaves the field out. Enforce the
+create/update split per method instead: aip-go's `MissingRequiredPaths`,
+protoc-gen-rust-aip's `missing_required_paths`.
+
+The problem names the rule and the fix. A rule fails the unset value, in
+protovalidate's own order, when:
+
+- it is `required = true`, which fails an unset field whatever its presence
+  and any `ignore` but `IGNORE_ALWAYS` (fix: remove it); or
+- the field has no presence (not `optional`, a message or a oneof member),
+  its `ignore` is neither `IGNORE_IF_ZERO_VALUE` nor `IGNORE_ALWAYS` (nor an
+  older protovalidate's `IGNORE_IF_UNPOPULATED`, `IGNORE_EMPTY`,
+  `IGNORE_IF_DEFAULT_VALUE` or `IGNORE_DEFAULT`), and a type rule fails the
+  zero value (fix: `IGNORE_IF_ZERO_VALUE`, or make the field `optional`):
+
+| Type | Fails the zero value |
+| --- | --- |
+| `string`, `bytes` | `len`, `min_len` (and `len_bytes`, `min_bytes`) ≥ 1; a `pattern` that does not match `""`; a non-empty `const`, `prefix`, `suffix` or `contains`; `in` without the empty value; `not_in` with it; `string.not_contains = ""`; a well-known format `""` fails — every `string` one but `uri_ref`, `well_known_regex = KNOWN_REGEX_HTTP_HEADER_NAME`, and `bytes` `ip`, `ipv4`, `ipv6`, `uuid` |
+| numeric | `const` ≠ 0; `in` without 0; `not_in` with 0; bounds that exclude 0, combined as protovalidate combines them (both when the upper is at least the lower, either when below) |
+| `enum` | `const` ≠ 0; `in` without 0; `not_in` with 0 |
+| `bool` | `const = true` |
+| `repeated`, `map` | `min_items`, `min_pairs` ≥ 1 |
+
+Only what can be decided exactly is reported: a pattern is compiled as RE2
+and tried on `""`, a NaN bound or an `ignore` value the schema's
+validate.proto does not declare is left alone, and `cel` rules are never
+evaluated.
 
 Not checked:
 
 - A request's own fields, such as `parent` or the resource field in
-  `CreateBookRequest`: they are not the resource's, and `required` is right
-  there.
+  `CreateBookRequest`: see
+  [`request-required-unenforced`](#protoc-contrib0203request-required-unenforced).
 - The fields of a message under a repeated field or a map. A mask cannot
-  index into either, so an element is always written whole, and `required`
-  on it holds for create and update alike.
+  index into either, so an element is always written whole, and its rules
+  hold for create and update alike.
 - Another resource the resource holds: it is checked as a resource of its
   own.
 

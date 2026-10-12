@@ -202,6 +202,30 @@ Not checked:
 A field declared in a file other than the one being linted is reported on the
 resource field the path starts from, naming the path.
 
+### `protoc-contrib::0203::non-empty-default-value`
+
+A field annotated `(google.api.field_behavior) = NON_EMPTY_DEFAULT` must set
+`(protoc.contrib.defaults.value)`.
+
+```proto
+int32 page_size = 1 [
+  (google.api.field_behavior) = OPTIONAL,
+  (google.api.field_behavior) = NON_EMPTY_DEFAULT,
+  (protoc.contrib.defaults.value).int32 = 50
+];
+```
+
+[AIP-203](https://google.aip.dev/203) has the service fill in a non-empty
+value when a client omits a NON_EMPTY_DEFAULT field. Which value is the
+schema's to say, and `(protoc.contrib.defaults.value)` is where
+[protoc-gen-go-defaults](https://github.com/protoc-contrib/protoc-gen-go-defaults)
+and
+[protoc-gen-rust-defaults](https://github.com/protoc-contrib/protoc-gen-rust-defaults)
+read it from to generate the code that fills it in. Without it, the
+annotation promises a default nothing applies. A schema that does not import
+`protoc/contrib/defaults/options.proto` at all is told so. The option is
+read by name, so any version of the options file works.
+
 ## Configuration
 
 Create an `api-linter` configuration file to enable or disable specific rules:

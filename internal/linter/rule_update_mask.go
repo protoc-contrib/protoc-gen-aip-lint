@@ -37,6 +37,7 @@ var updateRequestName = regexp.MustCompile("^Update[A-Z]+[A-Za-z0-9]*Request$")
 var customRules = []lint.ProtoRule{
 	updateMaskWritableFields,
 	resourceRequiredUnvalidated,
+	nonEmptyDefaultValue,
 }
 
 // registerCustomRules adds customRules to registry under their own

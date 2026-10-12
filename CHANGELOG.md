@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.4.1...v0.5.0) (2026-10-12)
+
+
+### Features
+
+* AIP-203 rules keeping buf.validate in step with REQUIRED and NON_EMPTY_DEFAULT ([#62](https://github.com/protoc-contrib/protoc-gen-aip-lint/issues/62)) ([5e4bd98](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/5e4bd981629f8c973c2f3231d0e948e25a535638))
+
 ## [0.4.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.4.0...v0.4.1) (2026-10-10)
 
 

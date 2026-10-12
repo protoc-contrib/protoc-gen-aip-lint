@@ -15,8 +15,9 @@ import (
 	"github.com/protoc-contrib/protoc-gen-aip-lint/internal/linter"
 )
 
-// validateProto is enough of protovalidate's validate.proto for the rule to
-// resolve `(buf.validate.field).field_mask.in` by name.
+// validateProto is enough of protovalidate's validate.proto for the rules to
+// resolve `(buf.validate.field)` by name: `field_mask.in`, `required`,
+// `ignore` and `string.min_len`, at protovalidate's own field numbers.
 func validateProto() *descriptorpb.FileDescriptorProto {
 	return &descriptorpb.FileDescriptorProto{
 		Name:       proto.String("buf/validate/validate.proto"),
@@ -34,16 +35,55 @@ func validateProto() *descriptorpb.FileDescriptorProto {
 				}},
 			},
 			{
-				Name: proto.String("FieldRules"),
+				Name: proto.String("StringRules"),
 				Field: []*descriptorpb.FieldDescriptorProto{{
-					Name:     proto.String("field_mask"),
-					Number:   proto.Int32(28),
-					Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-					Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
-					TypeName: proto.String(".buf.validate.FieldMaskRules"),
+					Name:   proto.String("min_len"),
+					Number: proto.Int32(2),
+					Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+					Type:   descriptorpb.FieldDescriptorProto_TYPE_UINT64.Enum(),
 				}},
 			},
+			{
+				Name: proto.String("FieldRules"),
+				Field: []*descriptorpb.FieldDescriptorProto{
+					{
+						Name:     proto.String("string"),
+						Number:   proto.Int32(14),
+						Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+						Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+						TypeName: proto.String(".buf.validate.StringRules"),
+					},
+					{
+						Name:   proto.String("required"),
+						Number: proto.Int32(25),
+						Label:  descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+						Type:   descriptorpb.FieldDescriptorProto_TYPE_BOOL.Enum(),
+					},
+					{
+						Name:     proto.String("ignore"),
+						Number:   proto.Int32(27),
+						Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+						Type:     descriptorpb.FieldDescriptorProto_TYPE_ENUM.Enum(),
+						TypeName: proto.String(".buf.validate.Ignore"),
+					},
+					{
+						Name:     proto.String("field_mask"),
+						Number:   proto.Int32(28),
+						Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
+						Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
+						TypeName: proto.String(".buf.validate.FieldMaskRules"),
+					},
+				},
+			},
 		},
+		EnumType: []*descriptorpb.EnumDescriptorProto{{
+			Name: proto.String("Ignore"),
+			Value: []*descriptorpb.EnumValueDescriptorProto{
+				{Name: proto.String("IGNORE_UNSPECIFIED"), Number: proto.Int32(0)},
+				{Name: proto.String("IGNORE_IF_ZERO_VALUE"), Number: proto.Int32(1)},
+				{Name: proto.String("IGNORE_ALWAYS"), Number: proto.Int32(3)},
+			},
+		}},
 		Extension: []*descriptorpb.FieldDescriptorProto{{
 			Name:     proto.String("field"),
 			Number:   proto.Int32(1159),

@@ -11,7 +11,7 @@ A [protoc](https://protobuf.dev) plugin that runs the [Google API Linter](https:
 ## Features
 
 - Lint `.proto` files against the full set of AIP rules
-- One rule of its own: an update mask's `field_mask.in` matches the resource's writable fields (see [Custom Rules](#custom-rules))
+- Rules of its own that keep `buf.validate` in step with `google.api.field_behavior` (see [Custom Rules](#custom-rules))
 - Multiple output formats: YAML, JSON, GitHub Actions annotations, and summary table
 - Configurable via the standard `api-linter` YAML configuration file
 - Works with `protoc`, `buf`, or any protoc-compatible toolchain
@@ -160,6 +160,47 @@ resource is the request field typed after it (`book` in `UpdateBookRequest`),
 or else its only message field besides `update_mask`. The option is read
 through the `buf/validate/validate.proto` the schema imports, so any
 protovalidate version works.
+
+### `protoc-contrib::0203::resource-required-unvalidated`
+
+A field of a resource annotated `(google.api.field_behavior) = REQUIRED`
+must not also set `(buf.validate.field).required = true`. Nor must a
+REQUIRED field of a singular message the resource holds, at any depth.
+
+```proto
+message Book {
+  option (google.api.resource) = {type: "example.com/Book" pattern: "books/{book}"};
+
+  string title = 2 [
+    (google.api.field_behavior) = REQUIRED,
+    // Not `required`: the length rule applies once a value is set.
+    (buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE,
+    (buf.validate.field).string.min_len = 1
+  ];
+}
+```
+
+[AIP-203](https://google.aip.dev/203#required) has a create set every
+REQUIRED field, and a partial update omit any its `update_mask` does not
+name. The resource message is shared by both, and protovalidate cannot tell
+which method it is validating, so `required` on the resource rejects every
+partial update that leaves the field out. Enforce the create/update split per
+method instead: aip-go's `MissingRequiredPaths`, protoc-gen-rust-aip's
+`missing_required_paths`.
+
+Not checked:
+
+- A request's own fields, such as `parent` or the resource field in
+  `CreateBookRequest`: they are not the resource's, and `required` is right
+  there.
+- The fields of a message under a repeated field or a map. A mask cannot
+  index into either, so an element is always written whole, and `required`
+  on it holds for create and update alike.
+- Another resource the resource holds: it is checked as a resource of its
+  own.
+
+A field declared in a file other than the one being linted is reported on the
+resource field the path starts from, naming the path.
 
 ## Configuration
 

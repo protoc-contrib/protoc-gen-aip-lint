@@ -15,46 +15,6 @@ import (
 	"github.com/protoc-contrib/protoc-gen-aip-lint/internal/linter"
 )
 
-// validateProto is enough of protovalidate's validate.proto for the rule to
-// resolve `(buf.validate.field).field_mask.in` by name.
-func validateProto() *descriptorpb.FileDescriptorProto {
-	return &descriptorpb.FileDescriptorProto{
-		Name:       proto.String("buf/validate/validate.proto"),
-		Package:    proto.String("buf.validate"),
-		Syntax:     proto.String("proto3"),
-		Dependency: []string{"google/protobuf/descriptor.proto"},
-		MessageType: []*descriptorpb.DescriptorProto{
-			{
-				Name: proto.String("FieldMaskRules"),
-				Field: []*descriptorpb.FieldDescriptorProto{{
-					Name:   proto.String("in"),
-					Number: proto.Int32(2),
-					Label:  descriptorpb.FieldDescriptorProto_LABEL_REPEATED.Enum(),
-					Type:   descriptorpb.FieldDescriptorProto_TYPE_STRING.Enum(),
-				}},
-			},
-			{
-				Name: proto.String("FieldRules"),
-				Field: []*descriptorpb.FieldDescriptorProto{{
-					Name:     proto.String("field_mask"),
-					Number:   proto.Int32(28),
-					Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-					Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
-					TypeName: proto.String(".buf.validate.FieldMaskRules"),
-				}},
-			},
-		},
-		Extension: []*descriptorpb.FieldDescriptorProto{{
-			Name:     proto.String("field"),
-			Number:   proto.Int32(1159),
-			Label:    descriptorpb.FieldDescriptorProto_LABEL_OPTIONAL.Enum(),
-			Type:     descriptorpb.FieldDescriptorProto_TYPE_MESSAGE.Enum(),
-			TypeName: proto.String(".buf.validate.FieldRules"),
-			Extendee: proto.String(".google.protobuf.FieldOptions"),
-		}},
-	}
-}
-
 // maskOptions carries `field_mask.in = paths` the way a plugin request does:
 // as unknown fields, protovalidate's Go types not being linked.
 func maskOptions(validate protoreflect.FileDescriptor, paths []string) *descriptorpb.FieldOptions {

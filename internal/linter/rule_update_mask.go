@@ -36,6 +36,9 @@ var updateRequestName = regexp.MustCompile("^Update[A-Z]+[A-Za-z0-9]*Request$")
 // customRules are the rules this plugin adds to api-linter's.
 var customRules = []lint.ProtoRule{
 	updateMaskWritableFields,
+	resourceRequiredRejectsZero,
+	requestRequiredUnenforced,
+	nonEmptyDefaultValue,
 }
 
 // registerCustomRules adds customRules to registry under their own
@@ -232,39 +235,12 @@ func unwritableBehaviors(field protoreflect.FieldDescriptor) []string {
 
 // fieldMaskIn reads `(buf.validate.field).field_mask.in` off field, and
 // whether it is set at all.
-//
-// The option is resolved through the extension the request's own descriptors
-// declare: protovalidate's Go types are not linked into this binary, so a
-// plugin request carries the option as unknown fields, which are re-read here
-// against the declared extension.
 func fieldMaskIn(field protoreflect.FieldDescriptor) ([]string, bool) {
-	extension := findExtension(field.ParentFile(), validateFieldExtension)
-	if extension == nil {
+	value, ok := fieldOption(field, validateFieldExtension)
+	if !ok {
 		return nil, false
 	}
-	options, ok := field.Options().(*descriptorpb.FieldOptions)
-	if !ok || options == nil {
-		return nil, false
-	}
-	raw, err := proto.Marshal(options)
-	if err != nil {
-		return nil, false
-	}
-	types := new(protoregistry.Types)
-	extensionType := dynamicpb.NewExtensionType(extension)
-	if err := types.RegisterExtension(extensionType); err != nil {
-		return nil, false
-	}
-	decoded := &descriptorpb.FieldOptions{}
-	if err := (proto.UnmarshalOptions{Resolver: types}).Unmarshal(raw, decoded); err != nil {
-		return nil, false
-	}
-	message := decoded.ProtoReflect()
-	if !message.Has(extensionType.TypeDescriptor()) {
-		return nil, false
-	}
-
-	rules := message.Get(extensionType.TypeDescriptor()).Message()
+	rules := value.Message()
 	fieldMask := rules.Descriptor().Fields().ByName("field_mask")
 	if fieldMask == nil || !rules.Has(fieldMask) {
 		return nil, false
@@ -280,6 +256,42 @@ func fieldMaskIn(field protoreflect.FieldDescriptor) ([]string, bool) {
 		paths = append(paths, list.Get(i).String())
 	}
 	return paths, true
+}
+
+// fieldOption reads the field option named name off field, and whether it is
+// set at all. It is false too when the schema declares no such option.
+//
+// The option is resolved through the extension the request's own descriptors
+// declare: the Go types of protovalidate or protoc-contrib's options are not
+// linked into this binary, so a plugin request carries the option as unknown
+// fields, which are re-read here against the declared extension.
+func fieldOption(field protoreflect.FieldDescriptor, name protoreflect.FullName) (protoreflect.Value, bool) {
+	extension := findExtension(field.ParentFile(), name)
+	if extension == nil {
+		return protoreflect.Value{}, false
+	}
+	options, ok := field.Options().(*descriptorpb.FieldOptions)
+	if !ok || options == nil {
+		return protoreflect.Value{}, false
+	}
+	raw, err := proto.Marshal(options)
+	if err != nil {
+		return protoreflect.Value{}, false
+	}
+	types := new(protoregistry.Types)
+	extensionType := dynamicpb.NewExtensionType(extension)
+	if err := types.RegisterExtension(extensionType); err != nil {
+		return protoreflect.Value{}, false
+	}
+	decoded := &descriptorpb.FieldOptions{}
+	if err := (proto.UnmarshalOptions{Resolver: types}).Unmarshal(raw, decoded); err != nil {
+		return protoreflect.Value{}, false
+	}
+	message := decoded.ProtoReflect()
+	if !message.Has(extensionType.TypeDescriptor()) {
+		return protoreflect.Value{}, false
+	}
+	return message.Get(extensionType.TypeDescriptor()), true
 }
 
 // findExtension looks for the extension named name in file and everything it

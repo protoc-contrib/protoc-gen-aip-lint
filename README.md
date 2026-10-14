@@ -150,10 +150,13 @@ singular message — a mask cannot index into a scalar, a repeated field or a
 map. So `author.create_time` is reported when `Author.create_time` is
 `OUTPUT_ONLY`, however writable `author` is.
 
-This is deliberately **stricter than AIP-161**, which has a server ignore an
-`OUTPUT_ONLY` path in a mask rather than reject it. Here `field_mask.in`
-rejects one — a client learns its write went nowhere instead of seeing it
-silently dropped — and this rule keeps `OUTPUT_ONLY` paths out of the list.
+Keeping `OUTPUT_ONLY` paths out of the list makes `field_mask.in` alone
+**stricter than AIP-161**, which has a server ignore such a path in a mask
+rather than reject it: protovalidate rejects the update instead. A server
+that follows AIP-161 drops the path before protovalidate runs — aip-go's
+`FieldBehaviorInterceptor` does, with
+`ClearFieldMask(resource, aip.OutputOnly, mask)` — so the list never sees it
+either way.
 
 A request whose `update_mask` has no `field_mask.in` is not checked. The
 resource is the request field typed after it (`book` in `UpdateBookRequest`),
@@ -187,8 +190,12 @@ REQUIRED field, and a partial update omit any its `update_mask` does not
 name. The resource message is shared by both, and protovalidate cannot tell
 which method it is validating, so a rule that fails the field's unset value
 fails every partial update that leaves the field out. Enforce the
-create/update split per method instead: aip-go's `MissingRequiredPaths`,
-protoc-gen-rust-aip's `missing_required_paths`.
+create/update split per method instead: aip-go's `FieldBehaviorInterceptor`
+does, or call `ValidateFields(resource, aip.Required, mask)` yourself — a nil
+mask on a create checks every field, an update's mask only the fields it
+names. In Rust, aip-rs's `FieldBehaviorInterceptor` does the same, or call
+`FieldBehavior::validate_fields(FieldBehaviorKind::Required, scope)` with
+`FieldScope::All` on a create and `FieldScope::Mask` on an update.
 
 The problem names the rule and the fix. A rule fails the unset value, in
 protovalidate's own order, when:

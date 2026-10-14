@@ -69,10 +69,11 @@ func registerCustomRules(registry lint.RuleRegistry) error {
 // update; a listed field that is not writable is one a client can overwrite.
 // A request with no `field_mask.in` is not this rule's concern.
 //
-// This is deliberately stricter than AIP-161, which has a server ignore an
-// OUTPUT_ONLY path in a mask rather than reject it: here `field_mask.in`
-// rejects one, so a client learns its write went nowhere, and this rule keeps
-// OUTPUT_ONLY paths out of the list.
+// Keeping OUTPUT_ONLY paths out of the list makes `field_mask.in` alone
+// stricter than AIP-161, which has a server ignore such a path in a mask
+// rather than reject it. A server that follows AIP-161 drops the path before
+// protovalidate runs — aip-go's FieldBehaviorInterceptor does, with
+// ClearFieldMask — so the list never sees it either way.
 var updateMaskWritableFields = &lint.MessageRule{
 	Name: UpdateMaskWritableFields,
 	OnlyIf: func(m protoreflect.MessageDescriptor) bool {
@@ -198,8 +199,8 @@ func unwritablePath(resource protoreflect.MessageDescriptor, path string) string
 }
 
 // writableFields is every top-level field of resource an update may write, in
-// declaration order — protoc-gen-rust-aip's MUTABLE_PATHS, aip-go's
-// MutablePaths.
+// declaration order — the fields aip-go's ImpliedFieldMask and aip-rs's
+// Resource::implied_field_mask imply an omitted update mask from.
 func writableFields(resource protoreflect.MessageDescriptor) []string {
 	var names []string
 	fields := resource.Fields()

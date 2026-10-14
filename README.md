@@ -155,8 +155,9 @@ Keeping `OUTPUT_ONLY` paths out of the list makes `field_mask.in` alone
 rather than reject it: protovalidate rejects the update instead. A server
 that follows AIP-161 drops the path before protovalidate runs — aip-go's
 `FieldBehaviorInterceptor` does, with
-`ClearFieldMask(resource, aip.OutputOnly, mask)` — so the list never sees it
-either way.
+`ClearFieldMask(resource, aip.OutputOnly, mask)`, and so does aip-rs's (0.6 and
+later), with `Resource::clear_field_mask(FieldBehaviorKind::OutputOnly, mask)`
+— so the list never sees it either way.
 
 A request whose `update_mask` has no `field_mask.in` is not checked. The
 resource is the request field typed after it (`book` in `UpdateBookRequest`),

@@ -19,7 +19,7 @@ const ResourceRequiredRejectsZero lint.RuleName = "protoc-contrib::0203::resourc
 
 // perMethod is how both rules name the check that does enforce REQUIRED on a
 // resource.
-const perMethod = "enforce REQUIRED per method (aip-go's MissingRequiredPaths, protoc-gen-rust-aip's missing_required_paths)"
+const perMethod = "enforce REQUIRED per method (aip-go's FieldBehaviorInterceptor or ValidateFields, aip-rs's FieldBehaviorInterceptor or FieldBehavior::validate_fields)"
 
 // resourceRequiredRejectsZero reports every field of a resource annotated
 // `(google.api.field_behavior) = REQUIRED` that protovalidate fails when a

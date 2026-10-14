@@ -275,7 +275,7 @@ var _ = Describe("ResourceRequiredRejectsZero", func() {
 				Expect(messages).To(ConsistOf(And(
 					ContainSubstring(rule+" rejects `Thing.value` when it is unset"),
 					ContainSubstring(fix),
-					ContainSubstring("MissingRequiredPaths"),
+					ContainSubstring("ValidateFields"),
 				)))
 			},
 			Entry("required", str, rules{"required": true}, "`required = true`", "remove `required`"),

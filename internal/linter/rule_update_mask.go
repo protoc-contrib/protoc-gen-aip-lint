@@ -73,7 +73,8 @@ func registerCustomRules(registry lint.RuleRegistry) error {
 // stricter than AIP-161, which has a server ignore such a path in a mask
 // rather than reject it. A server that follows AIP-161 drops the path before
 // protovalidate runs — aip-go's FieldBehaviorInterceptor does, with
-// ClearFieldMask — so the list never sees it either way.
+// ClearFieldMask, and so does aip-rs's (0.6 and later), with
+// Resource::clear_field_mask — so the list never sees it either way.
 var updateMaskWritableFields = &lint.MessageRule{
 	Name: UpdateMaskWritableFields,
 	OnlyIf: func(m protoreflect.MessageDescriptor) bool {

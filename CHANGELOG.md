@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.5.0...v0.5.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* name aip-go's and aip-rs's current API in the REQUIRED and update-mask advice ([#65](https://github.com/protoc-contrib/protoc-gen-aip-lint/issues/65)) ([8f842f8](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/8f842f83df2a518f13e199e09d30d47be746829f))
+
 ## [0.5.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.4.1...v0.5.0) (2026-10-12)
 
 

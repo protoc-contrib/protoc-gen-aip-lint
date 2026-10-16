@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/googleapis/api-linter/v2 v2.4.0
-	github.com/onsi/ginkgo/v2 v2.33.0
+	github.com/onsi/ginkgo/v2 v2.33.1
 	github.com/onsi/gomega v1.44.0
 	github.com/urfave/cli/v3 v3.14.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260908043556-f8649ddbbfe6

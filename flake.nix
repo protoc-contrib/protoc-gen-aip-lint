@@ -29,7 +29,7 @@
           inherit version;
           src = pkgs.lib.cleanSource ./.;
           subPackages = [ "cmd/protoc-gen-aip-lint" ];
-          vendorHash = "sha256-Hr7MRdd4iyY3uLE21sTGKdx92Tkomm5EJD/eUJl1ZX0=";
+          vendorHash = "sha256-AtbTmyXIKnypvrySl4j4o3AAYEzD0uzDM6YrMI+WB1U=";
           # The standard library only uses cgo for net and os/user, which fall
           # back to pure Go without it. The Linux binary is then static, so the
           # release asset runs on any distribution, not only under Nix.

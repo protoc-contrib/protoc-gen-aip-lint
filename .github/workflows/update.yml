@@ -24,6 +24,7 @@ jobs:
       - name: Update root flake.lock
         uses: nixos-contrib/nix-update@v1
         with:
+          repair-hashes: true
           token: ${{ steps.app-token.outputs.token }}
           pr-title: "chore(flake): update flake.lock"
           pr-labels: |

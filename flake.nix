@@ -4,18 +4,12 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    nix-release-bin = {
-      url = "github:nixos-contrib/nix-release-bin";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
   };
 
   outputs =
     {
       nixpkgs,
       flake-utils,
-      nix-release-bin,
       ...
     }:
     flake-utils.lib.eachDefaultSystem (
@@ -24,7 +18,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         version = (pkgs.lib.importJSON ./.github/config/release-please-manifest.json).".";
 
-        source = pkgs.buildGoModule {
+        package = pkgs.buildGoModule {
           pname = "protoc-gen-aip-lint";
           inherit version;
           src = pkgs.lib.cleanSource ./.;
@@ -47,17 +41,7 @@
         };
       in
       {
-        packages = {
-          # The latest release binary, where it has one for the system: CI pins
-          # them in the manifest once the release has published them.
-          default = nix-release-bin.lib.mkReleaseBin {
-            inherit pkgs;
-            manifest = ./.github/config/nix-release-bin-manifest.json;
-            pname = "protoc-gen-aip-lint";
-            fallback = source;
-          };
-          inherit source;
-        };
+        packages.default = package;
 
         devShells.default = pkgs.mkShell {
           name = "protoc-gen-aip-lint";

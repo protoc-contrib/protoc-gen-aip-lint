@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.5.1...v0.6.0) (2026-11-07)
+
+
+### Features
+
+* **ci:** push the Nix build to Cachix, and merge with the App token ([#78](https://github.com/protoc-contrib/protoc-gen-aip-lint/issues/78)) ([136b194](https://github.com/protoc-contrib/protoc-gen-aip-lint/commit/136b1942bd7d8cf37d70d992d10cb921f5334b68))
+
 ## [0.5.1](https://github.com/protoc-contrib/protoc-gen-aip-lint/compare/v0.5.0...v0.5.1) (2026-10-14)
 
 

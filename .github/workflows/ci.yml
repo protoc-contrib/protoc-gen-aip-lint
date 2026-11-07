@@ -39,8 +39,11 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v23
 
       - name: Update Dependency Hash
-        uses: nixos-contrib/nix-update-hash@main
+        uses: nixos-contrib/nix-update@v1
         with:
+          update-lock: false
+          repair-hashes: true
+          delivery: push
           installables: .#source
 
   test:
